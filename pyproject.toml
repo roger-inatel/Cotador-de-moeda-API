@@ -1,0 +1,19 @@
+[project]
+name = "dependencias-versionamento"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Roger Freitas",email = "roger.pereira@ges.inatel.br"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "typer (>=0.16.1,<0.17.0)",
+    "rich (>=14.1.0,<15.0.0)",
+    "requests (>=2.32.5,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
