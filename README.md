@@ -32,3 +32,11 @@ poetry run python src/cotacao.py stats-cmd 1 2 3 4 5
 
 ## Autor
 Roger Freitas <roger.pereira@ges.inatel.br>
+
+## Mudanças no arquivo README
+Oiii professor, através de muita luta e de muita persistência consegui fazer o que a atividade pedia!
+Tudo é um passo a passo né!
+Mas da próxima vou utilizar java, com python dá muito trabalho kkkkkkkk
+mas fé que com python vai
+tirulipa
+agr vai pf
