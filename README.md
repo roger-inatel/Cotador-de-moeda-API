@@ -1,6 +1,7 @@
 # dependencias-versionamento
 
 Ferramenta de linha de comando para cotação de moedas e estatísticas simples usando Typer e Rich.
+Feito durante a aula
 
 ## Instalação
 
