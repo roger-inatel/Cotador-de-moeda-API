@@ -33,6 +33,13 @@ poetry run python src/cotacao.py stats-cmd 1 2 3 4 5
 ## Autor
 Roger Freitas <roger.pereira@ges.inatel.br>
 
+## Mudanças no arquivo README
+Oiii professor, através de muita luta e de muita persistência consegui fazer o que a atividade pedia!
+Tudo é um passo a passo né!
+Mas da próxima vou utilizar java, com python dá muito trabalho kkkkkkkk
+mas fé que com python vai
+tirulipa
+
 ---
 ## 🤝 Como Contribuir
 
@@ -50,5 +57,3 @@ Agradecemos o seu interesse em contribuir para este projeto! Sua ajuda é fundam
 5.  **Commit e Push**: Faça o commit das suas alterações com uma mensagem clara e descritiva.
 
 6.  **Abra um Pull Request (PR)**: Vá até a página do seu fork no GitHub e clique em "New Pull Request". Descreva suas alterações detalhadamente e mencione qualquer issue relacionada.
-
----
