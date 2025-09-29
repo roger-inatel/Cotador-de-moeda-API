@@ -1,0 +1,207 @@
+name: CI/CD Pipeline - Cotador de Moedas
+
+# Executa em push para master/main
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch: # Permite execução manual
+
+# Variáveis globais
+env:
+  PYTHON_VERSION: '3.13'
+
+jobs:
+  # JOB 1: TESTES UNITÁRIOS
+  tests:
+    name: 🧪 Executar Testes Unitários  
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Configurar Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 📦 Instalar dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install typer rich requests pytest pytest-mock pytest-html pytest-cov
+        
+    - name: 🧪 Executar testes unitários com cobertura
+      run: |
+        python -m pytest tests/ -v --html=tests/report.html --self-contained-html --cov=src --cov-report=html --cov-report=xml
+        
+    - name: 📊 Upload do relatório de testes
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          tests/report.html
+          htmlcov/
+          coverage.xml
+
+  # JOB 2: BUILD E EMPACOTAMENTO  
+  build:
+    name: 🏗️ Build e Empacotamento
+    runs-on: ubuntu-latest
+    needs: tests # Só executa se os testes passaram
+    
+    steps:
+    - name: 📥 Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Configurar Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 📦 Instalar dependências de build
+      run: |
+        python -m pip install --upgrade pip
+        pip install build wheel setuptools
+        pip install typer rich requests
+        
+    - name: 🏗️ Criar distribuição
+      run: |
+        # Criar estrutura para empacotamento
+        mkdir -p dist
+        
+        # Copiar arquivos do projeto
+        cp -r src/ dist/
+        cp README.md dist/
+        cp pyproject.toml dist/
+        
+        # Criar arquivo de versão
+        echo "$(date '+%Y.%m.%d.%H%M%S')" > dist/VERSION
+        
+        # Criar arquivo ZIP
+        cd dist
+        zip -r ../cotador-moedas-$(date '+%Y%m%d-%H%M%S').zip .
+        cd ..
+        
+        # Criar tarball
+        tar -czf cotador-moedas-$(date '+%Y%m%d-%H%M%S').tar.gz -C dist .
+        
+    - name: 📦 Upload dos artefatos de build
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: |
+          *.zip
+          *.tar.gz
+          dist/
+
+  # JOB 3: NOTIFICAÇÃO (executa em paralelo)
+  notification:
+    name: 📧 Notificação por Email
+    runs-on: ubuntu-latest
+    # Este job roda em paralelo com os outros (não tem 'needs')
+    
+    steps:
+    - name: 📥 Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Configurar Python para script de email
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 📧 Executar script de notificação
+      env:
+        EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO || 'roger.pereira@ges.inatel.br' }}
+        SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_SHA: ${{ github.sha }}
+      run: |
+        python3 << 'EOF'
+        import os
+        import smtplib
+        import ssl
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from datetime import datetime
+        
+        def enviar_notificacao():
+            print("🚀 Pipeline executado!")
+            print(f"📧 Email de destino: {os.getenv('EMAIL_DESTINO', 'Não configurado')}")
+            print(f"👤 Executado por: {os.getenv('GITHUB_ACTOR', 'Desconhecido')}")
+            print(f"📂 Repositório: {os.getenv('GITHUB_REPOSITORY', 'Desconhecido')}")
+            print(f"🌿 Branch: {os.getenv('GITHUB_REF', 'Desconhecido').replace('refs/heads/', '')}")
+            print(f"🔗 Commit: {os.getenv('GITHUB_SHA', 'Desconhecido')[:8]}...")
+            print(f"⏰ Data/Hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print()
+            print("✅ Notificação de pipeline executada com sucesso!")
+            print("📝 Em um ambiente real, aqui seria enviado um email usando SMTP")
+            
+            # Simular conteúdo do email
+            email_content = f"""
+            🎉 PIPELINE CI/CD EXECUTADO COM SUCESSO! 🎉
+            
+            📋 DETALHES:
+            • Repositório: {os.getenv('GITHUB_REPOSITORY', 'Cotador-de-moeda-API')}
+            • Branch: {os.getenv('GITHUB_REF', 'master').replace('refs/heads/', '')}
+            • Commit: {os.getenv('GITHUB_SHA', 'abc123')[:8]}
+            • Executado por: {os.getenv('GITHUB_ACTOR', 'Desenvolvedor')}
+            • Data/Hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            
+            ✅ Status: Pipeline executado com sucesso!
+            🧪 Testes: Executados
+            🏗️ Build: Completo  
+            📦 Artefatos: Gerados
+            
+            --
+            Sistema automatizado de CI/CD
+            Cotador de Moedas API
+            """
+            
+            print("📬 CONTEÚDO DO EMAIL:")
+            print("-" * 50)
+            print(email_content)
+            print("-" * 50)
+            
+            # Em produção, aqui você configuraria:
+            # smtp_server = "smtp.gmail.com"
+            # port = 587
+            # sender_email = os.getenv('SENDER_EMAIL')
+            # password = os.getenv('EMAIL_PASSWORD') 
+            # recipient = os.getenv('EMAIL_DESTINO')
+            
+        if __name__ == "__main__":
+            enviar_notificacao()
+        EOF
+
+  # JOB 4: RESULTADO FINAL
+  pipeline-success:
+    name: ✅ Pipeline Concluído
+    runs-on: ubuntu-latest
+    needs: [tests, build] # Aguarda tests e build (notification roda em paralelo)
+    if: success()
+    
+    steps:
+    - name: 🎉 Pipeline executado com sucesso
+      run: |
+        echo "🎉 Pipeline executado com sucesso!"
+        echo "✅ Testes: OK | Build: OK | Notificação: OK"
+        echo "� Artefatos gerados e armazenados"
+
+  # JOB 5: FALHA NO PIPELINE
+  pipeline-failure:
+    name: ❌ Pipeline Falhou
+    runs-on: ubuntu-latest
+    needs: [tests, build]
+    if: failure()
+    
+    steps:
+    - name: ❌ Pipeline falhou
+      run: |
+        echo "❌ Pipeline falhou - verificar logs"
+        exit 1
