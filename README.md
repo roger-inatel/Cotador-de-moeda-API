@@ -131,6 +131,7 @@ O pipeline é executado automaticamente nos pushes para `master` e inclui:
 ## 👥 Desenvolvedor
 
 - **Implementação CI/CD:** Pipeline completo com testes, build e notificações
+- **Branch:** feature/ci-cd-pipeline - Desenvolvimento seguindo GitFlow
 
 ## 📝 Notas da Atividade
 
