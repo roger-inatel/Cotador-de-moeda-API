@@ -1,0 +1,261 @@
+name: CI/CD Pipeline - Sistema de Cotação de Moedas
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.13'
+  EMAIL_DESTINO: 'roger.pereira@ges.inatel.br'
+
+jobs:
+  tests:
+    name: 🧪 Testes Unitários e Cobertura
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache de dependências
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Instalar dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-html pytest-cov pytest-mock
+        
+    - name: Executar testes com cobertura
+      run: |
+        python -m pytest tests/ -v \
+          --cov=src \
+          --cov-report=html \
+          --cov-report=xml \
+          --html=report.html \
+          --self-contained-html
+          
+    - name: Upload relatórios de teste
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          report.html
+          htmlcov/
+          coverage.xml
+        retention-days: 30
+
+  security:
+    name: 🔒 Análise de Segurança
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Instalar ferramentas de segurança
+      run: |
+        pip install bandit safety
+    - name: Verificar vulnerabilidades
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        safety check --json --output safety-report.json || true
+    - name: Upload relatórios de segurança
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: "*-report.json"
+
+  quality:
+    name: 📊 Qualidade do Código
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Instalar ferramentas de qualidade
+      run: |
+        pip install flake8 black isort mypy
+    - name: Verificar formatação
+      run: |
+        black --check src/ tests/ || echo "Formatação necessária"
+        isort --check-only src/ tests/ || echo "Imports precisam ser organizados"
+    - name: Análise estática
+      run: |
+        flake8 src/ tests/ --max-line-length=100 --ignore=E203,W503 || true
+        mypy src/ || true
+
+  build:
+    name: 🏗️ Build e Empacotamento
+    runs-on: ubuntu-latest
+    needs: [tests, security, quality]
+    if: success()
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Instalar ferramentas de build
+      run: |
+        pip install build wheel setuptools
+        
+    - name: Criar estrutura de distribuição
+      run: |
+        mkdir -p dist/cotacao-system
+        cp -r src/ dist/cotacao-system/
+        cp -r tests/ dist/cotacao-system/
+        cp README.md dist/cotacao-system/
+        cp requirements.txt dist/cotacao-system/ 2>/dev/null || echo "requirements.txt não encontrado"
+        
+    - name: Gerar metadados do build
+      run: |
+        echo "Build ID: ${{ github.run_number }}" > dist/build-info.txt
+        echo "Commit: ${{ github.sha }}" >> dist/build-info.txt
+        echo "Branch: ${{ github.ref_name }}" >> dist/build-info.txt
+        echo "Data: $(date)" >> dist/build-info.txt
+        
+    - name: Criar pacotes de distribuição
+      run: |
+        cd dist
+        tar -czf cotacao-system-${{ github.run_number }}.tar.gz cotacao-system/
+        zip -r cotacao-system-${{ github.run_number }}.zip cotacao-system/
+        
+    - name: Upload artefatos de build
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          dist/*.tar.gz
+          dist/*.zip
+          dist/build-info.txt
+        retention-days: 30
+
+  notification:
+    name: 📧 Notificação de Pipeline
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [tests, security, quality, build]
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Criar e executar notificação
+      env:
+        PIPELINE_STATUS: ${{ needs.tests.result == 'success' && needs.build.result == 'success' && 'SUCCESS' || 'FAILURE' }}
+        TESTS_STATUS: ${{ needs.tests.result }}
+        BUILD_STATUS: ${{ needs.build.result }}
+        SECURITY_STATUS: ${{ needs.security.result }}
+        QUALITY_STATUS: ${{ needs.quality.result }}
+      run: |
+        cat > send_notification.py << 'EOF'
+        import os
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from datetime import datetime
+
+        def gerar_relatorio_pipeline():
+            pipeline_status = os.getenv('PIPELINE_STATUS', 'UNKNOWN')
+            tests_status = os.getenv('TESTS_STATUS', 'UNKNOWN')
+            build_status = os.getenv('BUILD_STATUS', 'UNKNOWN')
+            security_status = os.getenv('SECURITY_STATUS', 'UNKNOWN')
+            quality_status = os.getenv('QUALITY_STATUS', 'UNKNOWN')
+            
+            status_icon = "✅" if pipeline_status == 'SUCCESS' else "❌"
+            
+            html_content = f"""
+            <html>
+            <body>
+                <h2>{status_icon} Pipeline CI/CD - Sistema de Cotação de Moedas</h2>
+                <p><strong>Status Geral:</strong> {pipeline_status}</p>
+                <p><strong>Data/Hora:</strong> {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</p>
+                
+                <h3>📊 Detalhes dos Jobs:</h3>
+                <ul>
+                    <li>🧪 <strong>Testes:</strong> {tests_status}</li>
+                    <li>🔒 <strong>Segurança:</strong> {security_status}</li>
+                    <li>📊 <strong>Qualidade:</strong> {quality_status}</li>
+                    <li>🏗️ <strong>Build:</strong> {build_status}</li>
+                </ul>
+                
+                <h3>📦 Repositório:</h3>
+                <p>roger-inatel/Testes_cotacao</p>
+                <p>Branch: {os.getenv('GITHUB_REF_NAME', 'main')}</p>
+                <p>Commit: {os.getenv('GITHUB_SHA', 'N/A')[:8]}</p>
+                
+                <hr>
+                <p><em>Notificação automática do GitHub Actions</em></p>
+            </body>
+            </html>
+            """
+            
+            return html_content
+
+        def enviar_email_simulado():
+            email_destino = os.getenv('EMAIL_DESTINO', 'roger.pereira@ges.inatel.br')
+            html_content = gerar_relatorio_pipeline()
+            
+            print("=" * 60)
+            print("📧 SIMULAÇÃO DE ENVIO DE EMAIL")
+            print("=" * 60)
+            print(f"📬 Destinatário: {email_destino}")
+            print(f"📋 Assunto: Pipeline CI/CD - {os.getenv('PIPELINE_STATUS', 'UNKNOWN')}")
+            print("📄 Conteúdo:")
+            print(html_content.replace('<html><body>', '').replace('</body></html>', ''))
+            print("=" * 60)
+            print("✅ Email simulado enviado com sucesso!")
+            
+            return True
+
+        if __name__ == "__main__":
+            try:
+                resultado = enviar_email_simulado()
+                if resultado:
+                    print("🎉 Notificação de pipeline executada com sucesso!")
+                else:
+                    print("⚠️ Falha na notificação de pipeline!")
+            except Exception as e:
+                print(f"❌ Erro na notificação: {str(e)}")
+        EOF
+        
+        python send_notification.py
+
+  deploy:
+    name: 🚀 Deploy (Simulação)
+    runs-on: ubuntu-latest
+    needs: [tests, build]
+    if: github.ref == 'refs/heads/main' && success()
+    environment:
+      name: production
+      url: https://github.com/roger-inatel/Testes_cotacao
+    steps:
+    - name: Simulação de Deploy
+      run: |
+        echo "🚀 Iniciando deploy para produção..."
+        echo "📦 Baixando artefatos de build..."
+        echo "🔧 Configurando ambiente de produção..."
+        echo "📋 Executando scripts de migração..."
+        echo "✅ Deploy concluído com sucesso!"
+        echo "🌐 Sistema disponível em: https://cotacao-app.exemplo.com"
