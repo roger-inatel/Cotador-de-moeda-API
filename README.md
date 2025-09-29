@@ -2,7 +2,7 @@
 
 [![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-brightgreen)](https://github.com/roger-inatel/Testes_cotacao/actions)
 [![Python](https://img.shields.io/badge/Python-3.13-blue)](https://python.org)
-[![Tests](https://img.shields.io/badge/Tests-23%2B-success)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-45-success)](tests/)
 [![Coverage](https://img.shields.io/badge/Coverage-Relatório%20Gerado-brightgreen)](htmlcov/)
 
 Sistema completo de cotação e conversão de moedas desenvolvido com foco em qualidade, testes abrangentes e pipeline CI/CD profissional.
@@ -37,7 +37,7 @@ Sistema completo de **Continuous Integration/Continuous Deployment** implementad
 
 | Job | Descrição | Duração | Status |
 |-----|-----------|---------|--------|
-| 🧪 **Testes** | 23+ testes unitários com cobertura | ~30s | [![Tests](https://img.shields.io/badge/Status-Passing-brightgreen)](tests/) |
+| 🧪 **Testes** | 45 testes unitários com cobertura | ~30s | [![Tests](https://img.shields.io/badge/Status-Passing-brightgreen)](tests/) |
 | 🔒 **Segurança** | Análise com Bandit + Safety | ~20s | [![Security](https://img.shields.io/badge/Status-Verified-brightgreen)](security/) |
 | 📊 **Qualidade** | Black, Flake8, isort, MyPy | ~15s | [![Quality](https://img.shields.io/badge/Status-Checked-brightgreen)](quality/) |
 | 🏗️ **Build** | Empacotamento e artefatos | ~25s | [![Build](https://img.shields.io/badge/Status-Success-brightgreen)](build/) |
@@ -56,7 +56,7 @@ Sistema completo de **Continuous Integration/Continuous Deployment** implementad
 
 ### 📊 Cobertura de Testes
 
-- **✅ 23+ Testes Unitários** implementados
+- **✅ 45 Testes Unitários** implementados
 - **🎯 4 Classes Testadas** completamente  
 - **🔧 Mocks e Simulações** para cenários complexos
 - **📈 Relatórios HTML** gerados automaticamente
@@ -119,7 +119,7 @@ Sistema completo de **Continuous Integration/Continuous Deployment** implementad
 ├── 📁 src/                   # 💻 Código fonte
 │   └── cotacao.py            #    Classes principais
 ├── 📁 tests/                 # 🧪 Testes
-│   ├── test_cotacao.py       #    Testes básicos (23 cenários)
+│   ├── test_cotacao.py       #    Testes básicos (23 cenários)\n│   └── test_cotacao_avancado.py #  Testes avançados (22 cenários)
 │   └── test_cotacao_avancado.py #  Testes avançados (mocks, integração)
 ├── 📁 scripts/               # 🛠️ Utilitários
 │   └── send_notification.py  #    Sistema de notificação
@@ -245,7 +245,7 @@ python scripts/send_notification.py
 
 | Requisito | Implementação | Status |
 |-----------|---------------|--------|
-| **20+ Testes Unitários** | 23+ testes implementados | ✅ |
+| **20+ Testes Unitários** | 45 testes implementados | ✅ |
 | **3+ Jobs Pipeline** | 6 jobs (testes, segurança, qualidade, build, notificação, deploy) | ✅ |
 | **Empacotamento** | ZIP, TAR.GZ, relatórios | ✅ |
 | **Execução Paralela** | Jobs independentes simultâneos | ✅ |
