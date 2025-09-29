@@ -144,7 +144,7 @@ class NotificadorPipeline:
                 
                 <div class="footer">
                     <p><em>Notificação automática gerada pelo GitHub Actions</em></p>
-                    <p>Sistema de Cotação de Moedas - Projeto Inatel C14</p>
+                    <p>Sistema de Cotação de Moedas - Projeto Inatel C14 - Engenharia de Software</p>
                     <p>🤖 Desenvolvido com CI/CD Best Practices</p>
                 </div>
             </div>
@@ -179,7 +179,7 @@ class NotificadorPipeline:
         GitHub Actions: https://github.com/roger-inatel/Testes_cotacao/actions
         
         Notificação automática do GitHub Actions
-        Sistema de Cotação de Moedas - Projeto Inatel C14
+        Sistema de Cotação de Moedas - Projeto Inatel C14 - Engenharia de Software
         """
         
         return html_content, text_content

@@ -9,7 +9,7 @@ Sistema completo de cotação e conversão de moedas desenvolvido com foco em qu
 
 ## 🎯 Sobre o Projeto
 
-Este projeto implementa um **sistema de cotação de moedas** com arquitetura limpa, separação de responsabilidades e cobertura completa de testes. Desenvolvido como parte da disciplina **C14 - Testes** do Inatel.
+Este projeto implementa um **sistema de cotação de moedas** com arquitetura limpa, separação de responsabilidades e cobertura completa de testes. Desenvolvido como parte da disciplina **C14 - Engenharia de Software** do Inatel.
 
 ### ✨ Funcionalidades
 
@@ -283,4 +283,4 @@ git merge feature/nova-funcionalidade
 
 ## 📜 Licença
 
-Projeto desenvolvido para fins acadêmicos - **Inatel C14 Testes**
+Projeto desenvolvido para fins acadêmicos - **Inatel C14 - Engenharia de Software**

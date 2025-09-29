@@ -1,5 +1,5 @@
 # Checklist - Requisitos da Atividade CI/CD
-## Sistema de Cotação de Moedas - Inatel C14
+## Sistema de Cotação de Moedas - Inatel C14 - Engenharia de Software
 
 ### ✅ REQUISITOS OBRIGATÓRIOS ATENDIDOS
 
