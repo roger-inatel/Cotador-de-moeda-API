@@ -32,12 +32,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install typer rich requests pytest pytest-mock pytest-html pytest-cov
         
-    - name: 🧪 Executar testes unitários com cobertura
+    - name: 🧪 Executar testes unitários
       run: |
-        python -m pytest tests/ -v --html=tests/report.html --self-contained-html --cov=src --cov-report=html --cov-report=xml
+        python -m pytest tests/ -v
+        
+    - name: 📊 Gerar relatórios (se disponível)
+      run: |
+        python -m pytest tests/ -v --html=tests/report.html --self-contained-html --cov=src --cov-report=html --cov-report=xml || echo "Relatórios opcionais não gerados"
         
     - name: 📊 Upload do relatório de testes
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-reports
@@ -89,7 +93,7 @@ jobs:
         tar -czf cotador-moedas-$(date '+%Y%m%d-%H%M%S').tar.gz -C dist .
         
     - name: 📦 Upload dos artefatos de build
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: |
