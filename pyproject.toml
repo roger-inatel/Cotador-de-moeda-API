@@ -1,0 +1,45 @@
+[project]
+name = "testes-cotacao"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "mypy (>=1.18.2,<2.0.0)",
+    "isort (>=6.0.1,<7.0.0)",
+    "black (>=25.9.0,<26.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+pytest-html = "^4.1.1"
+pytest-cov = "^7.0.0"
+pytest-mock = "^3.15.1"
+
+
+[tool.poetry.group.seguranca.dependencies]
+bandit = "^1.8.6"
+safety = "^3.6.2"
+
+
+[tool.poetry.group.qualidade.dependencies]
+black = "^25.9.0"
+flake8 = "^7.3.0"
+isort = "^6.0.1"
+mypy = "^1.18.2"
+
+
+[tool.poetry.group.testes.dependencies]
+pytest = "^8.4.2"
+pytest-html = "^4.1.1"
+pytest-cov = "^7.0.0"
+pytest-mock = "^3.15.1"
+

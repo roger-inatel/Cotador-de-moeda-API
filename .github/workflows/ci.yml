@@ -2,9 +2,9 @@ name: CI/CD Pipeline - Sistema de Cotação de Moedas
 
 on:
   push:
-    branches: [ main, master ]
+    branches: ["main"]
   pull_request:
-    branches: [ main, master ]
+    branches: ["main"]
   workflow_dispatch:
 
 env:
@@ -16,37 +16,31 @@ jobs:
     name: 🧪 Testes Unitários e Cobertura
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout do código
-      uses: actions/checkout@v4
+    - name: 1. Checkout do Código
+      uses: actions/checkout@v3
       
-    - name: Configurar Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
+    - name: 2. Configurar Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         
-    - name: Cache de dependências
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+    - name: 3. Instalar o Poetry 
+      run: pip install poetry
           
-    - name: Instalar dependências
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-html pytest-cov pytest-mock
+    - name: 4. Instalar Dependências
+      run: poetry install
         
-    - name: Executar testes com cobertura
+    - name: 5. Executar testes com cobertura
+      # Usa 'poetry run' para executar o pytest dentro do ambiente virtual
       run: |
-        python -m pytest tests/ -v \
+        poetry run python -m pytest tests/ -v \
           --cov=src \
           --cov-report=html \
           --cov-report=xml \
           --html=report.html \
           --self-contained-html
           
-    - name: Upload relatórios de teste
+    - name: 6. Upload Relatórios de Teste (Artefatos)
       if: always()
       uses: actions/upload-artifact@v4
       with:
@@ -61,18 +55,28 @@ jobs:
     name: 🔒 Análise de Segurança
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - name: 1. Checkout do Código
+      uses: actions/checkout@v4
+      
+    - name: 2. Configurar Python
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - name: Instalar ferramentas de segurança
+
+    - name: 3. Instalar o Poetry (Via Script)
       run: |
-        pip install bandit safety
-    - name: Verificar vulnerabilidades
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH 
+
+    - name: 4. Instalar Dependências de Segurança
+      run: poetry install --only seguranca
+
+    - name: 5. Verificar Vulnerabilidades
       run: |
-        bandit -r src/ -f json -o bandit-report.json || true
-        safety check --json --output safety-report.json || true
-    - name: Upload relatórios de segurança
+        poetry run bandit -r src/ -f json -o bandit-report.json || true
+        poetry run safety check --json --output safety-report.json || true
+        
+    - name: 6. Upload Relatórios de Segurança
       uses: actions/upload-artifact@v4
       with:
         name: security-reports
@@ -82,21 +86,28 @@ jobs:
     name: 📊 Qualidade do Código
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - name: 1. Checkout do Código
+      uses: actions/checkout@v4
+      
+    - name: 2. Configurar Python
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - name: Instalar ferramentas de qualidade
+
+    - name: 3. Instalar o Poetry (Via Script)
       run: |
-        pip install flake8 black isort mypy
-    - name: Verificar formatação
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+    - name: 4. Instalar Dependências de Qualidade
+      run: poetry install --only qualidade
+      
+    - name: 5. Verificar Qualidade
       run: |
-        black --check src/ tests/ || echo "Formatação necessária"
-        isort --check-only src/ tests/ || echo "Imports precisam ser organizados"
-    - name: Análise estática
-      run: |
-        flake8 src/ tests/ --max-line-length=100 --ignore=E203,W503 || true
-        mypy src/ || true
+        poetry run black --check src/ tests/ || echo "Formatação necessária"
+        poetry run isort --check-only src/ tests/ || echo "Imports precisam ser organizados"
+        poetry run flake8 src/ tests/ --max-line-length=100 --ignore=E203,W503 || true
+        poetry run mypy src/ || true
 
   build:
     name: 🏗️ Build e Empacotamento
@@ -104,46 +115,38 @@ jobs:
     needs: [tests, security, quality]
     if: success()
     steps:
-    - name: Checkout do código
+    - name: 1. Checkout do Código
       uses: actions/checkout@v4
       
-    - name: Configurar Python
+    - name: 2. Configurar Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Instalar ferramentas de build
+
+    - name: 3. Instalar o Poetry (Via Script)
       run: |
-        pip install build wheel setuptools
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
         
-    - name: Criar estrutura de distribuição
-      run: |
-        mkdir -p dist/cotacao-system
-        cp -r src/ dist/cotacao-system/
-        cp -r tests/ dist/cotacao-system/
-        cp README.md dist/cotacao-system/
-        cp requirements.txt dist/cotacao-system/ 2>/dev/null || echo "requirements.txt não encontrado"
+    - name: 4. Criar Pacotes de Distribuição (Poetry Build)
+      run: poetry build 
         
-    - name: Gerar metadados do build
+    - name: 5. Gerar Metadados do Build
       run: |
+        mkdir -p dist
         echo "Build ID: ${{ github.run_number }}" > dist/build-info.txt
         echo "Commit: ${{ github.sha }}" >> dist/build-info.txt
         echo "Branch: ${{ github.ref_name }}" >> dist/build-info.txt
         echo "Data: $(date)" >> dist/build-info.txt
         
-    - name: Criar pacotes de distribuição
-      run: |
-        cd dist
-        tar -czf cotacao-system-${{ github.run_number }}.tar.gz cotacao-system/
-        zip -r cotacao-system-${{ github.run_number }}.zip cotacao-system/
-        
-    - name: Upload artefatos de build
+    - name: 6. Upload Artefatos de Build (Pacote e Info)
+      # O pacote e o build-info.txt são armazenados como artefatos.
       uses: actions/upload-artifact@v4
       with:
-        name: build-artifacts
+        name: package-artifacts
         path: |
+          dist/*.whl
           dist/*.tar.gz
-          dist/*.zip
           dist/build-info.txt
         retention-days: 30
 
@@ -153,16 +156,18 @@ jobs:
     if: always()
     needs: [tests, security, quality, build]
     steps:
-    - name: Checkout do código
+    - name: 1. Checkout do Código
       uses: actions/checkout@v4
       
-    - name: Configurar Python
+    - name: 2. Configurar Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         
-    - name: Criar e executar notificação
+    - name: 3. Criar e executar notificação
+      # EMAIL_DESTINO é passado via secret, atendendo à restrição de não ser hardcoded.
       env:
+        EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO }} 
         PIPELINE_STATUS: ${{ needs.tests.result == 'success' && needs.build.result == 'success' && 'SUCCESS' || 'FAILURE' }}
         TESTS_STATUS: ${{ needs.tests.result }}
         BUILD_STATUS: ${{ needs.build.result }}
@@ -171,12 +176,10 @@ jobs:
       run: |
         cat > send_notification.py << 'EOF'
         import os
-        import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
         from datetime import datetime
 
         def gerar_relatorio_pipeline():
+            # (Lógica de relatórios idêntica à sua original)
             pipeline_status = os.getenv('PIPELINE_STATUS', 'UNKNOWN')
             tests_status = os.getenv('TESTS_STATUS', 'UNKNOWN')
             build_status = os.getenv('BUILD_STATUS', 'UNKNOWN')
@@ -214,7 +217,7 @@ jobs:
             return html_content
 
         def enviar_email_simulado():
-            email_destino = os.getenv('EMAIL_DESTINO', 'roger.pereira@ges.inatel.br')
+            email_destino = os.getenv('EMAIL_DESTINO', 'EMAIL NÃO CONFIGURADO')
             html_content = gerar_relatorio_pipeline()
             
             print("=" * 60)
@@ -225,7 +228,11 @@ jobs:
             print("📄 Conteúdo:")
             print(html_content.replace('<html><body>', '').replace('</body></html>', ''))
             print("=" * 60)
-            print("✅ Email simulado enviado com sucesso!")
+            
+            if email_destino == 'EMAIL NÃO CONFIGURADO':
+                print("⚠️ A variável de ambiente EMAIL_DESTINO NÃO foi configurada (Secret ausente). Simulação completa, mas o envio real falharia.")
+            else:
+                print("✅ Email simulado enviado com sucesso!")
             
             return True
 

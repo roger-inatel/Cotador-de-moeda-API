@@ -1,3 +1,7 @@
+
+
+
+
 class CotacaoService:
     """Cotação fixa das moedas em relação ao dólar."""
     def buscar_cotacao(self, moeda: str) -> float:
@@ -8,17 +12,34 @@ class CotacaoService:
         }
         return cotacoes.get(moeda.upper(), None)
 
+
 class ConversorMoeda:
+    
+    def calcular_taxa(self, valor:float) -> float:
+        """Calcular a taxa de transação baseada no valor"""
+        if valor > 1000.00:
+            return 0.005 # 0.5% para grandes columes
+        
+        return 0.01 # 1 % para volumes normais
+    
     """Responsável por converter valores entre moedas."""
     def converter(self, valor: float, moeda_origem: str, moeda_destino: str, cotacao_service: CotacaoService) -> float:
         if valor is None or float(valor) <= 0:
             return None
+        # get cotação sem mudança   
+        
         cotacao_origem = cotacao_service.buscar_cotacao(moeda_origem)
         cotacao_destino = cotacao_service.buscar_cotacao(moeda_destino)
+        
         if cotacao_origem is None or cotacao_destino is None:
             return None
-        valor_em_dolar = float(valor) * cotacao_origem
+        
+        taxa = self.calcular_taxa(valor)
+        valor_com_taxa = valor - valor * taxa
+        
+        valor_em_dolar = float(valor_com_taxa) * cotacao_origem
         valor_convertido = valor_em_dolar / cotacao_destino
+        
         return valor_convertido
 
 class ValidadorEntrada:
