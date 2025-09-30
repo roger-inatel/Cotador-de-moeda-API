@@ -1,19 +1,62 @@
 [project]
+<<<<<<< HEAD
+name = "testes-cotacao"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+=======
 name = "dependencias-versionamento"
 version = "0.1.0"
 description = ""
 authors = [
     {name = "Roger Freitas",email = "roger.pereira@ges.inatel.br"}
+>>>>>>> origin/master
 ]
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+<<<<<<< HEAD
+    "mypy (>=1.18.2,<2.0.0)",
+    "isort (>=6.0.1,<7.0.0)",
+    "black (>=25.9.0,<26.0.0)"
+=======
     "typer (>=0.16.1,<0.17.0)",
     "rich (>=14.1.0,<15.0.0)",
     "requests (>=2.32.5,<3.0.0)"
+>>>>>>> origin/master
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+<<<<<<< HEAD
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+pytest-html = "^4.1.1"
+pytest-cov = "^7.0.0"
+pytest-mock = "^3.15.1"
+
+
+[tool.poetry.group.seguranca.dependencies]
+bandit = "^1.8.6"
+safety = "^3.6.2"
+
+
+[tool.poetry.group.qualidade.dependencies]
+black = "^25.9.0"
+flake8 = "^7.3.0"
+isort = "^6.0.1"
+mypy = "^1.18.2"
+
+
+[tool.poetry.group.testes.dependencies]
+pytest = "^8.4.2"
+pytest-html = "^4.1.1"
+pytest-cov = "^7.0.0"
+pytest-mock = "^3.15.1"
+
+=======
+>>>>>>> origin/master
